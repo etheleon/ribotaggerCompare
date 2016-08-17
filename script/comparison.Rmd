@@ -1,0 +1,85 @@
+We are going to compare competing softwares against [Ribotagger](github.com/xiechaos/ribotagger) using the our own inhouse dataset.
+
+# Benchmarking Ribotagger against other competiting softwares
+
+1. Metagenomic 16S rDNA Illumina tags are a powerful alternative to amplicon sequencing to explore diversity and structure of microbial communities
+    * [Pubmed](http://www.ncbi.nlm.nih.gov/pubmed/24102695)
+    * No software
+2. Microbial community analysis with ribosomal gene fragments from shotgun metagenomes - SSUSearch. Guo et al 2016
+    * [Pubmed](http://www.ncbi.nlm.nih.gov/pubmed/26475107)
+    * [Software - SSUSearch](https://github.com/dib-lab/SSUsearch)
+4. Metaxa and Metaxa2. Work from Bentsson et al. 
+    * [Pubmed - Metaxa](http://www.ncbi.nlm.nih.gov/pubmed/21674231)
+    * [Pubmed - Metaxa2 Bengtsson-Palme et al. 2015](http://www.ncbi.nlm.nih.gov/pubmed/25732605)
+    * [Software](http://microbiology.se/software/metaxa2/)
+4. riboFrame from Ramazzotti et al 2015
+    * [Pubmed](http://www.ncbi.nlm.nih.gov/pubmed/26635865)
+    * [Software](https://github.com/matteoramazzotti/riboFrame)
+
+## Benchmarking Dataset
+
+Anoxic aerobic tanks from Ulu Pandan wastewater treatment plant.
+
+## Hardware Specs:
+
+| Component | Specs |
+| --- | --- |
+| CPU | 2 x Intel Xeon X7542 (18M Cache, 2.66 GHz)
+| RAM | 128 GB memory |
+| HDD | 146 GB OS disk (usable 104 GB) |
+| EXTERNAL HDD |  8 TB RAID disk (usable 7.3 TB) |
+
+## OS Environment
+
+We tested each of the softwares in a Ubuntu 16.04 docker container on the above server.
+The dockerfiles for the environments are provided below
+
+#### Software1 - SSUSearch
+
+##### Summary
+
+Method:
+
+1. 2 HMMs, one for eukaryotes and one for bacteria + archaea
+2. RDP clustering
+
+##### Test Files in db folder
+
+__Alignment Files (Mothur)__
+
+* Ali_template.silva_lsu.fasta
+* Ali_template.silva_ssu.
+* Ali_template.silva_ssu.fasta
+* Ali_template.test.fasta
+* Ali_template.test_lsu.fasta
+
+* Gene_tax.silva_taxa_family.tree.train
+* Gene_tax.silva_taxa_family.tax
+* Gene_tax.silva_taxa_family.tree.sum
+* Gene_tax.silva_taxa_family.Gene_db.silva_108_rep_set.8mer.prob
+* Gene_tax.silva_taxa_family.Gene_db.silva_108_rep_set.8mer.numNonZero
+* Gene_tax.silva_taxa_genus.tax
+* Gene_tax.ssu_rdp_rep.tax
+* Gene_tax.lsu_silva_rep.tax
+* Gene_tax_cc.greengene_97_otus.tax
+
+Copy_db.copyrighter.txt
+Gene_db.silva_108_rep_set.8mer
+Gene_db.silva_108_rep_set.fasta
+Gene_db.ssu_rdp_rep.fasta
+Gene_db.lsu_silva_rep.fasta
+Gene_db_cc.greengene_97_otus.fasta
+
+Gene_model_org.16s_ecoli_J01695.fasta
+
+__Hidden Markov Models__
+
+1. Hmm.lsu.hmm
+2. Hmm.ssu.hmm
+
+__MISC__
+
+readme
+clean.sh
+
+
