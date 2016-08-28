@@ -84,7 +84,8 @@ DIFF=$(echo "$END - $START" | bc)
 
 Time taken: 20405.431670749
 
-```{r}
+
+```r
 library(data.table)
 library(dplyr)
 library(magrittr)
@@ -106,9 +107,21 @@ rbfrbtssu   = merge(rbfrbt, ssu.phylum, by="Phylum", all=T) %>% setNames(c("Phyl
 rbfrbtssu[is.na(rbfrbtssu)] = 0
 
 rbfrbtssu %$% qplot(log10(count.rbt+1), log10(count.ssu+1)) 
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png) 
+
+```r
 rbfrbtssu %$% qplot(log10(count.rbf+1),  log10(count.ssu+1))
+```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-2.png) 
+
+```r
 rbfrbtssu %$% qplot(log10(count.rbf+1), log10(count.rbt+1))
 ```
+
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-3.png) 
 
 
 

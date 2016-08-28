@@ -3,7 +3,7 @@
 # Based on Ubuntu
 ############################################################
 
-# Set the base image to Ubuntu
+# Set the base image to Ubuntu which is 16.04 at the time of writing this
 FROM ubuntu:latest
 
 # File Author / Maintainer
@@ -27,35 +27,54 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 90
 RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.9 90
 RUN update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.9 90
 
+# Dependency-HMMER
 RUN wget http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2.tar.gz && \
     tar -xzvf hmmer-3.1b2.tar.gz
-
 WORKDIR hmmer-3.1b2
-
 RUN ./configure && \
     make && \
     make install
 
 ENV PATH /opt/conda/bin:/usr/local/bin:$PATH
-
 RUN conda install -c ged screed=0.7.1
 
 WORKDIR /
 
+# Dependency-Mothur
 RUN wget http://www.mothur.org/w/images/8/88/Mothur.cen_64.zip -O mothur.zip && \
     unzip mothur.zip
-
 ENV PATH /mothur/:$PATH
 
-RUN conda install jupyter
+# For hosting jupyter notebook
+# RUN conda install jupyter
 
-EXPOSE 8888
+# EXPOSE 8888
+# COPY run_ipython.sh /run_ipython.sh
+# RUN chmod +x /run_ipython.sh
 
-COPY run_ipython.sh /run_ipython.sh
-RUN chmod +x /run_ipython.sh
-
-RUN mkdir -p /notebooks
-VOLUME /notebooks
+# RUN mkdir -p /notebooks
+# VOLUME /notebooks
 
 ENV SHELL=/bin/bash
-CMD ["/run_ipython.sh"]
+
+# mount testing fasta file dataset
+
+RUN mkdir -p /compare/SSUsearch /compare/ribotagger /compare/workdir /compare/data
+RUN git clone https://github.com/dib-lab/SSUsearch.git /compare/SSUsearch
+# Necesary HMM files
+
+WORKDIR /compare/data
+RUN curl -O curl -O https://s3.amazonaws.com/ssusearchdb/SSUsearch_db.tgz && \
+    tar zvxf SSUsearch_db.tgz
+
+# test files - not neccessary to run
+RUN wget https://s3.amazonaws.com/ssusearchdb/test.tgz &&\
+    tar zvxf test.tgz
+
+WORKDIR /compare
+
+RUN apt-get install -y bc
+
+COPY runTest.sh /compare
+VOLUME /data
+# CMD ["/run_ipython.sh"]
