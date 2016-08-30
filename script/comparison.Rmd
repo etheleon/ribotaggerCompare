@@ -21,6 +21,7 @@ others (but not investigated)
 * Fastqc
 * Reads have been trimmed using trimmomatic (adapter and quality trimmed)
 
+A total of 41,523,808 reads remain after.
 
 ## Hardware Specs:
 
@@ -84,7 +85,10 @@ DIFF=$(echo "$END - $START" | bc)
 
 Time taken: 20405.431670749
 
-```{r}
+```{r echo=FALSE}
+# there was a total of 41523808 reads remain after QC + trimming
+# grep "^>" data/anoxic/rna/Day1_AERO_Sample02-combined.fasta | wc -l
+
 library(data.table)
 library(dplyr)
 library(magrittr)
@@ -92,19 +96,36 @@ library(ggplot2)
 
 #rbf         = fread("../out/riboFrame/Day1_AERO_Sample02-READ.16S.rdp", h=F, sep="\t")
 rbf.phylum  = read.table("../out/riboFrame/phylum.count") %>% setNames(c("Phylum", "count")) %>% arrange(count)
+
 rbt         = fread("../out/ribotagger/annotation.anno", sep="\t", h=T)
 rbt.countFile = fread("../out/ribotagger/annotation.tab", sep="\t", h=T) %>% setNames(c("tag", "count"))
 rbtNEW = merge(rbt, rbt.countFile, by="tag", all=T)
-rbt.phylum = rbtNEW %>% select(p, count) %>% group_by(p) %>% summarise(counts = sum(count)) %>% setNames(c("Phylum", "count"))
+
+#number of unique OTUs with at least a phylum tag
+rbtNEW %>% select(k:g) %>% unique %>% filter(p!="") %>% nrow
+
+rbt.phylum = rbtNEW %>% filter(p!="") %>% mutate(uniqueString = paste(k,p,c,o,f,g,s, sep=";"), newcount = count) %>% group_by(uniqueString) %>% summarise(groupedCount = sum(count))
+
+rbt.phylum2 =  rbt.phylum %>% apply(1, function(row){
+data.frame(
+    Phylum = unlist(regmatches(row['uniqueString'], regexec("^Bacteria;([^;]+);", row['uniqueString'])))[2],
+    count =as.integer(row['groupedCount'])
+)
+}) %>% do.call(rbind,.) %>% 
+group_by(Phylum) %>% summarise(newcount = sum(count)) %>% setNames(c("Phylum", "count"))
+
+
+
+#rbt.phylum = rbtNEW %>% select(p, count) %>% group_by(p) %>% summarise(counts = sum(count)) %>% setNames(c("Phylum", "count"))
 
 #rbt.phylum  = setNames(as.data.frame(table(rbt$p)), c("Phylum", "count")) %>% arrange(count)
 #rbt.phylum  = rbt.phylum[rbt.phylum$Phylum != "",]
 
 ssu.phylum  = read.csv("../out/ssusearch/phylumCount.ssusearch", h=F, sep="\t") %>% setNames(c("Phylum", "count"))
-rbfrbt      = merge(rbf.phylum, rbt.phylum, by="Phylum", all=T, suffixes = c(".rbf", ".rbt")) %>% arrange(count.rbt)
+
+rbfrbt      = merge(rbf.phylum, rbt.phylum2, by="Phylum", all=T, suffixes = c(".rbf", ".rbt")) %>% arrange(count.rbt)
 rbfrbtssu   = merge(rbfrbt, ssu.phylum, by="Phylum", all=T) %>% setNames(c("Phylum", "count.rbf", "count.rbt", "count.ssu"))
 rbfrbtssu[is.na(rbfrbtssu)] = 0
-
 ```
 
 ```{r echo=FALSE}
@@ -113,7 +134,80 @@ rbfrbtssu %$% qplot(count.rbt+1, count.rbf+1) + scale_x_log10() + scale_y_log10(
 rbfrbtssu %$% qplot(count.rbf+1, count.ssu+1) + scale_x_log10() + scale_y_log10() + xlab("RiboFrame") + ylab("SSUsearch")
 ```
 
+```{r intercepts, echo=FALSE}
 
+#rbfrbtssu %>% select(-Phylum) %>% apply(2, sum)
+#ribotagger: 38 169216
+
+countIntercept = function(columns){
+rbfrbtssu[,columns] %>% apply(1, function(row){ min(row)}) %>% as.integer %>% sum
+}
+
+
+countIntercept.phyla = function(columns){
+rbfrbtssu %>% apply(1, function(row){
+isAllPresent = sum(as.integer(row[columns]) == 0 ) == 0
+if(isAllPresent){
+    row[1]
+}else{
+    NA
+}
+})
+}
+
+
+countIntercept.phyla2 = function(columns){
+rbfrbtssu %>% apply(1, function(row){
+isAllPresent = sum(as.integer(row[columns]) == 0 ) == 0
+if(isAllPresent){
+    row
+}else{
+    NA
+}
+})
+}
+
+#frame & tagger
+frameNtag = countIntercept.phyla(2:3)
+frameNtag[complete.cases(frameNtag)] %>% length
+# ssu & tagger
+ssuNtag = countIntercept.phyla(3:4)
+ssuNtag[complete.cases(ssuNtag)] %>% length
+# frame & ssu
+frameNss = countIntercept.phyla(c(2,4))
+frameNss[complete.cases(frameNss)] %>% length
+# all
+allTools = countIntercept.phyla(2:4)
+allTools[complete.cases(allTools)] %>% length
+
+#frame & tagger
+frameNtagger = countIntercept.phyla2(2:3) %>% do.call(rbind,.)
+frameNtagger[complete.cases(frameNtagger),c(1,2,3)]
+# ssu & tagger
+ssuNribotagger = countIntercept.phyla2(3:4)%>% do.call(rbind,.)
+ssuNribotagger[complete.cases(ssuNribotagger),c(1,3,4)]
+
+# frame & ssu
+riboframeNss = countIntercept.phyla2(c(2,4))%>% do.call(rbind,.)
+riboframeNss[complete.cases(riboframeNss),c(1,2,4)]
+
+# all
+allTools2 = countIntercept.phyla2(2:4)%>% do.call(rbind,.)
+allTools2[complete.cases(allTools2),]
+
+
+# > countIntercept(2:3)
+# [1] 160418
+# 
+# > countIntercept(3:4)
+# [1] 162991
+# 
+# > countIntercept(c(2,4))
+# [1] 4894464
+# 
+# > countIntercept(2:4)
+# [1] 159662
+```
 
 
 
