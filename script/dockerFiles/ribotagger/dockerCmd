@@ -1,0 +1,1 @@
+docker run -v /raid/home/wesley/github/compareRibo/data:/data -it ribotagger /bin/bash
